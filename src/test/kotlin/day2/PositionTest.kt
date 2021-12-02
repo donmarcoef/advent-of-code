@@ -14,7 +14,7 @@ internal class PositionTest {
         val position = Position().forward(5).down(5).forward(8).up(3).down(8).forward(2)
 
         assertEquals(15, position.horizontalPosition)
-        assertEquals(10, position.depth)
+        assertEquals(60, position.depth)
     }
 
     @Test
@@ -25,9 +25,11 @@ internal class PositionTest {
             ActionFactory.forText(it)
         }.map {
             position.runActions(it)
+
+            println("$it + $position")
         }
 
         assertEquals(15, position.horizontalPosition)
-        assertEquals(10, position.depth)
+        assertEquals(60, position.depth)
     }
 }

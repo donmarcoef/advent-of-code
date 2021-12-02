@@ -9,20 +9,23 @@ class Position {
 
     private var currentDepth: Int = 0
 
+    private var currentAim:Int = 0
+
     val horizontalPosition
         get() = currentHorizontalPosition
 
     val depth
         get() = currentDepth
 
-    fun forward(nr: Int): Position {
-        currentHorizontalPosition += nr
+    fun forward(units: Int): Position {
+        currentHorizontalPosition += units
+        currentDepth += currentAim * units
 
         return this
     }
 
-    fun down(paraDepth: Int): Position {
-        currentDepth += paraDepth
+    fun down(units: Int): Position {
+        currentAim += units
 
         return this
     }
@@ -38,6 +41,12 @@ class Position {
             currentAction.doWithPosition(this)
         }
     }
+
+    override fun toString(): String {
+        return "Position(horizontal position=$currentHorizontalPosition, depth=$currentDepth, aim=$currentAim)"
+    }
+
+
 }
 
 interface Action {
@@ -53,21 +62,21 @@ object ActionFactory {
         }
 
         val action = actionWithCnt.first()
-        val cnt = try {
+        val units = try {
             actionWithCnt.last().toInt()
         } catch (e: NumberFormatException) {
-            throw IllegalArgumentException("cnt for action '$text' isn't a number")
+            throw IllegalArgumentException("unit for action '$text' isn't a number")
         }
 
         return when (action) {
             "forward" -> {
-                ForwardAction(cnt)
+                ForwardAction(units)
             }
             "down" -> {
-                DownAction(cnt)
+                DownAction(units)
             }
             "up" -> {
-                UpAction(cnt)
+                UpAction(units)
             }
             else -> {
                 throw IllegalArgumentException("unknown action '$action'")
@@ -76,20 +85,34 @@ object ActionFactory {
     }
 }
 
-class ForwardAction(private val cnt: Int) : Action {
+class ForwardAction(private val units: Int) : Action {
     override fun doWithPosition(position: Position) {
-        position.forward(cnt)
+        position.forward(units)
+    }
+
+    override fun toString(): String {
+        return "ForwardAction(units=$units)"
     }
 }
 
-class DownAction(private val cnt: Int) : Action {
+class DownAction(private val units: Int) : Action {
     override fun doWithPosition(position: Position) {
-        position.down(cnt)
+        position.down(units)
     }
+
+    override fun toString(): String {
+        return "DownAction(units=$units)"
+    }
+
+
 }
 
-class UpAction(private val cnt: Int) : Action {
+class UpAction(private val units: Int) : Action {
     override fun doWithPosition(position: Position) {
-        position.up(cnt)
+        position.up(units)
+    }
+
+    override fun toString(): String {
+        return "UpAction(units=$units)"
     }
 }
