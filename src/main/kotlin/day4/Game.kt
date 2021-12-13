@@ -32,7 +32,7 @@ class Game(val boards: List<Board>) {
                     this.winningBoard = winningBoards.first()
                     this.winningNumber = currentNumber
 
-                    return this.winningBoard!!.unmarkedNumbers().sum() * currentNumber
+                    return calculateScoreForBoard(currentNumber, winningBoard!!)
                 }
             }
         }
@@ -43,6 +43,11 @@ class Game(val boards: List<Board>) {
     fun getWinningNumber() = winningNumber
 
     fun getWinningBoard() = winningBoard?:throw IllegalArgumentException("no board wins")
+
+    companion object {
+        fun calculateScoreForBoard(currentNumber: Int, board: Board) =
+            board.unmarkedNumbers().sum() * currentNumber
+    }
 }
 
 fun main() {
