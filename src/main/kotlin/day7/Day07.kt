@@ -1,7 +1,6 @@
 package day7
 
 import readInput
-import kotlin.math.max
 
 /**
  * @author Team Nexus
@@ -15,7 +14,12 @@ data class Crab(var position:Int) {
             this.position - position
         }
 
-        return steps
+        var sum = 0
+        for(i in IntRange(1, steps)) {
+            sum+=i
+        }
+
+        return sum
     }
 }
 
