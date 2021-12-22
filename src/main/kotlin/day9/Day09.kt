@@ -1,89 +1,86 @@
 package day9
 
 import readInput
+import java.util.*
 
 /**
  * @author Team Nexus
  **/
-data class LocationHeight(
-    val position: Position, val height: Int,
-    val up: Int?,
-    val down: Int?,
-    val left: Int?,
-    val right: Int?
-) {
-
-    fun isLowerAsNeighbours(): Boolean {
-        val isLower = { toCheckHeight: Int? ->
-            if (toCheckHeight != null)  height < toCheckHeight else true
-        }
-
-        return isLower(up) && isLower(down) && isLower(left) && isLower(right)
-    }
-
-}
-
 data class Position(
     val x: Int,
     val y: Int,
-) {
+)
 
-    fun up() = Position(x, y - 1)
+class Cave(val heights: List<List<Int>>) {
+    private val maxY = heights.lastIndex
+    private val maxX = heights.first().lastIndex
+    private val points: List<Position> = heights.indices.flatMap { y ->
+        heights[y].indices.map { x -> Position(x, y) }
+    }
 
-    fun down() = Position( x, y + 1)
-
-    fun left() = Position(x - 1, y)
-
-    fun right() = Position(x + 1, y)
-
-}
-
-fun locationHeights(heights: List<List<Int>>): MutableMap<Position, LocationHeight> {
-    val maxY = heights.size
-    val maxX = heights.first().size
-
-    val getElementOrNull = { position: Position ->
-        if (position.x >= maxX || position.x < 0 || position.y < 0 || position.y >= maxY) {
-            null
+    fun heightAt(position: Position) =
+        if (position.x > maxX || position.x < 0 || position.y < 0 || position.y > maxY) {
+            throw IllegalStateException("unknown Position")
         } else {
             heights[position.y][position.x]
         }
+
+    fun getNeighbours(point: Position): List<Position> {
+        val (x, y) = point
+        val left = if (x == 0) null else Position(x - 1, y)
+        val top = if (y == 0) null else Position(x, y - 1)
+        val right = if (x == maxX) null else Position(x + 1, y)
+        val bottom = if (y == maxY) null else Position(x, y + 1)
+
+        return listOfNotNull(left, top, right, bottom)
     }
 
-    val values = mutableMapOf<Position, LocationHeight>()
-    for (y in IntRange(0, maxY - 1)) {
-        for (x in IntRange(0, maxX - 1)) {
-            val position = Position(x, y)
-            val currentHeight = heights[y][x]
+    fun isLow(point: Position) = getNeighbours(point).all { neighbour ->
+        heightAt(neighbour) > heightAt(point)
+    }
 
-            values[position] = LocationHeight(
-                position,
-                currentHeight,
-                getElementOrNull(position.up()),
-                getElementOrNull(position.down()),
-                getElementOrNull(position.left()),
-                getElementOrNull(position.right())
-            )
+    fun getLows() = points.filter { point -> isLow(point) }
+
+    fun getBasinSize(point: Position): Int {
+        val accountedFor = mutableSetOf(point)
+        val queue = LinkedList<Position>().also { it.add(point) }
+        var basinSize = 0
+        while (queue.isNotEmpty()) {
+            val next = queue.poll()
+            if (heightAt(next) != 9) {
+                basinSize++
+                getNeighbours(next).let { neighbours ->
+                    queue.addAll(neighbours.filter { !accountedFor.contains(it) })
+                    accountedFor.addAll(neighbours)
+                }
+            }
         }
+        return basinSize
     }
-
-    return values
 }
 
-fun readLocationHeights(values: List<String>) =
-    locationHeights(values.map { line ->
+fun toHeightMap(values: List<String>) =
+    values.map { line ->
         line.map { it.digitToInt() }
-    })
+    }
 
-fun lowestLocationHeights(locationHeights: MutableMap<Position, LocationHeight>) =
-    locationHeights.values.filter { it.isLowerAsNeighbours() }.mapNotNull { it.height }
+private fun part1(heightMap: List<List<Int>>): Int {
+    val cave = Cave(heightMap)
+    val lows = cave.getLows()
+    val riskFactors = lows.map { cave.heightAt(it) + 1 }
+    return riskFactors.sum()
+}
 
-fun riskLevel(lowestValues:List<Int>) = lowestValues.sumOf { it + 1 }
+private fun part2(heightMap: List<List<Int>>): Int {
+    val cave = Cave(heightMap)
+    val lows = cave.getLows()
+    val basinSizes = lows.map { cave.getBasinSize(it) }
+    return basinSizes.sortedDescending().take(3).reduce { a, b -> a * b }
+}
 
 fun main() {
+    val heightMap = toHeightMap(readInput("heights", Position::class.java, true))
 
-    val locationHeights = readLocationHeights(readInput("heights", LocationHeight::class.java, true))
-    val lowestValues = lowestLocationHeights(locationHeights)
-
-    println(riskLevel(lowestValues))
+    println(part1(heightMap))
+    println(part2(heightMap))
 }
